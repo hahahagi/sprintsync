@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <!-- Background rounded squircle -->
+  <rect width="32" height="32" rx="8" fill="url(#brandGrad)" />
+  <!-- Lightning Zap Icon -->
+  <path
+    d="M18 4L7 17h6l-2 11 11-13h-6l2-11z"
+    fill="#ffffff"
+    stroke="#ffffff"
+    stroke-width="0.5"
+    stroke-linejoin="round"
+  />
+</svg>

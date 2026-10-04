@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { Ticket } from "@/lib/schema";
 import { TicketCard } from "./TicketCard";
 
@@ -21,6 +24,7 @@ export function KanbanBoard({ tickets }: KanbanBoardProps) {
             key={col.key}
             className={`kanban-column border-t-4 ${col.accent}`}
           >
+            {/* Header Kolom */}
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-semibold text-slate-700">
                 {col.label}
@@ -29,9 +33,20 @@ export function KanbanBoard({ tickets }: KanbanBoardProps) {
                 {colTickets.length}
               </span>
             </div>
-            {colTickets.map((t) => (
-              <TicketCard key={t.id} t={t} />
+
+            {/* List Tiket dengan Animasi Stagger */}
+            {colTickets.map((t, i) => (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.15, duration: 0.4 }}
+              >
+                <TicketCard t={t} />
+              </motion.div>
             ))}
+
+            {/* Empty State */}
             {colTickets.length === 0 && (
               <p className="text-xs text-slate-400 italic py-8 text-center">
                 No tickets
