@@ -128,3 +128,9 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  .kanban-column {
+    @apply flex flex-col gap-3 rounded-xl bg-slate-50 p-4 min-h-[400px];
+  }
+}
