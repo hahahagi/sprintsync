@@ -1,50 +1,55 @@
 "use client";
 
 import { Ticket } from "@/lib/schema";
-import { Link2 } from "lucide-react";
 
 const PRIORITY_STYLE = {
-  Critical: "bg-red-500/15 text-red-600 border-red-500/30",
-  High: "bg-orange-500/15 text-orange-600 border-orange-500/30",
-  Medium: "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
-  Low: "bg-slate-500/15 text-slate-600 border-slate-500/30",
+  Critical: "bg-rose-50 text-rose-700 border-rose-200",
+  High: "bg-amber-50 text-amber-800 border-amber-200",
+  Medium: "bg-blue-50 text-blue-700 border-blue-200",
+  Low: "bg-slate-100 text-slate-700 border-slate-200",
 } as const;
 
 export function TicketCard({ t }: { t: Ticket }) {
   return (
-    <div className="rounded-xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-mono text-slate-400">{t.id}</span>
+    <div className="rounded-2xl border border-[#e0e3e7] bg-white p-4 shadow-xs transition-all hover:border-[#c4c6d0] hover:shadow-md">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-mono font-medium text-slate-400">
+          {t.id}
+        </span>
         <span
-          className={`rounded-full border px-2 py-0.5 text-xs font-medium ${PRIORITY_STYLE[t.priority]}`}
+          className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${PRIORITY_STYLE[t.priority]}`}
         >
           {t.priority}
         </span>
       </div>
 
-      <h3 className="mt-2 font-semibold leading-snug text-sm">
+      <h3 className="mt-2 text-sm font-semibold leading-snug text-[#1f1f1f]">
         {t.issue_title}
       </h3>
 
-      <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-        <span>👤 {t.assignee}</span>
-        <span className="rounded bg-blue-50 px-1.5 py-0.5 font-semibold text-blue-600">
+      <div className="mt-2.5 flex items-center gap-3 text-xs text-slate-600">
+        <span className="inline-flex items-center gap-1">
+          <span className="material-symbols-outlined !text-[16px] text-slate-400">person</span>
+          <span>{t.assignee}</span>
+        </span>
+        <span className="rounded-full bg-[#d3e3fd]/60 px-2.5 py-0.5 font-bold text-[#0b57d0] text-[11px]">
           {t.story_points} SP
         </span>
       </div>
 
-      <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-slate-600">
+      <ul className="mt-3 list-disc space-y-1.5 pl-4 text-xs text-slate-600 leading-relaxed">
         {t.acceptance_criteria.map((ac) => (
           <li key={ac}>{ac}</li>
         ))}
       </ul>
 
       {t.dependency.has_dependency && (
-        <div className="mt-3 flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
-          <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>
-            Blocked by {t.dependency.blocked_by.join(", ")}:{" "}
-            {t.dependency.note}
+        <div className="mt-3.5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/90 p-2.5 text-xs text-amber-900">
+          <span className="material-symbols-outlined !text-[16px] text-amber-700 shrink-0 mt-0.5">
+            link_off
+          </span>
+          <span className="leading-snug">
+            <strong>Blocked by {t.dependency.blocked_by.join(", ")}:</strong> {t.dependency.note}
           </span>
         </div>
       )}

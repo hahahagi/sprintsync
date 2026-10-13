@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, CheckCircle2 } from "lucide-react";
 
 const STEPS = [
-  "Parsing meeting transcript…",
-  "Identifying speakers & action items…",
-  "Estimating story points…",
-  "Mapping dependencies…",
-  "Generating backlog tickets…",
+  "Parsing meeting transcript...",
+  "Identifying speakers and action items...",
+  "Estimating story points...",
+  "Mapping dependencies...",
+  "Generating backlog tickets...",
 ];
 
 export function AnalyzingState() {
@@ -22,41 +21,56 @@ export function AnalyzingState() {
     return () => clearInterval(t);
   }, []);
 
+  const progressPercent = ((step + 1) / STEPS.length) * 100;
+
   return (
     <div className="space-y-6">
-      <ul className="space-y-2">
+      {/* M3 Linear Progress Bar */}
+      <div className="w-full bg-[#e0e3e7] h-1.5 rounded-full overflow-hidden">
+        <div
+          className="bg-[#0b57d0] h-full transition-all duration-500 ease-out"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
+      <ul className="space-y-3">
         {STEPS.map((label, i) => (
           <li
             key={label}
-            className={`flex items-center gap-2 text-sm transition-opacity duration-300 ${
-              i <= step ? "opacity-100" : "opacity-30"
+            className={`flex items-center gap-3 text-xs font-semibold transition-opacity duration-300 ${
+              i <= step ? "opacity-100 text-[#1f1f1f]" : "opacity-40 text-slate-500"
             }`}
           >
             {i < step ? (
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span className="material-symbols-outlined text-emerald-600 !text-[20px]">
+                check_circle
+              </span>
             ) : i === step ? (
-              <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+              <span className="material-symbols-outlined animate-spin text-[#0b57d0] !text-[20px]">
+                progress_activity
+              </span>
             ) : (
-              <span className="h-4 w-4" />
+              <span className="material-symbols-outlined text-slate-400 !text-[20px]">
+                radio_button_unchecked
+              </span>
             )}
-            {label}
+            <span>{label}</span>
           </li>
         ))}
       </ul>
 
-      {/* Skeleton cards */}
+      {/* Skeletons M3 */}
       <div className="grid gap-4 md:grid-cols-3">
         {[0, 1, 2].map((c) => (
           <div key={c} className="space-y-3">
             {[0, 1].map((k) => (
               <div
                 key={k}
-                className="animate-pulse rounded-xl border bg-white/5 p-4 space-y-3"
+                className="rounded-2xl border border-[#e0e3e7] bg-white p-4 space-y-3 animate-pulse shadow-xs"
               >
-                <div className="h-4 w-3/4 rounded bg-slate-300/30" />
-                <div className="h-3 w-1/2 rounded bg-slate-300/30" />
-                <div className="h-3 w-full rounded bg-slate-300/30" />
-                <div className="h-3 w-5/6 rounded bg-slate-300/30" />
+                <div className="h-4 w-3/4 rounded-full bg-[#f0f4f9]" />
+                <div className="h-3 w-1/2 rounded-full bg-[#f0f4f9]" />
+                <div className="h-3 w-full rounded-full bg-[#f0f4f9]" />
               </div>
             ))}
           </div>

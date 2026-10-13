@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 import { Ticket } from "@/lib/schema";
 import { TicketCard } from "./TicketCard";
 
-const COLUMNS: { key: Ticket["column"]; label: string; accent: string }[] = [
-  { key: "in_progress", label: "🔄 In Progress", accent: "border-t-blue-500" },
-  { key: "todo", label: "📋 To Do", accent: "border-t-orange-500" },
-  { key: "backlog", label: "📦 Backlog", accent: "border-t-slate-400" },
+const COLUMNS = [
+  { key: "in_progress" as const, label: "In Progress", icon: "pending_actions", color: "text-[#0b57d0]" },
+  { key: "todo" as const, label: "To Do", icon: "task_alt", color: "text-amber-600" },
+  { key: "backlog" as const, label: "Backlog", icon: "inventory_2", color: "text-slate-600" },
 ];
 
 interface KanbanBoardProps {
@@ -22,35 +22,37 @@ export function KanbanBoard({ tickets }: KanbanBoardProps) {
         return (
           <div
             key={col.key}
-            className={`kanban-column border-t-4 ${col.accent}`}
+            className="flex flex-col gap-3 rounded-2xl border border-[#c4c6d0]/60 bg-[#f0f4f9] p-4 min-h-[460px]"
           >
-            {/* Header Kolom */}
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold text-slate-700">
-                {col.label}
-              </h2>
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600">
+            <div className="flex items-center justify-between px-1 py-1">
+              <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined !text-[20px] ${col.color}`}>
+                  {col.icon}
+                </span>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-[#1f1f1f]">
+                  {col.label}
+                </h2>
+              </div>
+              <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-slate-700 shadow-xs border border-[#e0e3e7]">
                 {colTickets.length}
               </span>
             </div>
 
-            {/* List Tiket dengan Animasi Stagger */}
             {colTickets.map((t, i) => (
               <motion.div
                 key={t.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.15, duration: 0.4 }}
+                transition={{ delay: i * 0.08, duration: 0.3 }}
               >
                 <TicketCard t={t} />
               </motion.div>
             ))}
 
-            {/* Empty State */}
             {colTickets.length === 0 && (
-              <p className="text-xs text-slate-400 italic py-8 text-center">
-                No tickets
-              </p>
+              <div className="flex items-center justify-center flex-1 py-14">
+                <p className="text-xs text-slate-400 italic">No tickets in this column</p>
+              </div>
             )}
           </div>
         );
