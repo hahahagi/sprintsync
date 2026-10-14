@@ -38,7 +38,7 @@ async function callGroq(transcript: string) {
         { role: "user", content: `TRANSCRIPT:\n${transcript}` },
       ],
     }),
-    signal: createAbortSignal(12000),
+    signal: createAbortSignal(25000),
   });
 
   if (!res.ok) throw new Error(`Groq ${res.status}`);
@@ -69,7 +69,7 @@ async function callGemini(transcript: string) {
           responseMimeType: "application/json",
         },
       }),
-      signal: createAbortSignal(12000),
+      signal: createAbortSignal(25000),
     }
   );
 
