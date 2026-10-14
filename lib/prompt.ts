@@ -11,7 +11,7 @@ RULES:
 7. "dependency": set has_dependency=true if a ticket cannot start before another; list the blocking ticket ids in "blocked_by" and explain in "note". Otherwise has_dependency=false, blocked_by=[], note="".
 8. "id": sequential, format "SS-101", "SS-102", ...
 9. "column": Critical -> "in_progress"; High -> "todo"; Medium/Low -> "backlog".
-10. Write all text in English, concise and professional.
+10. Write in the same language as the transcript (if transcript is in Indonesian, write concise and natural technical Indonesian; if English, write in English).
 
 JSON SCHEMA (follow exactly):
 {
