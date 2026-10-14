@@ -1,7 +1,33 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, MicOff } from "lucide-react";
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: { error: string }) => void;
+  onend: () => void;
+}
+
+interface SpeechRecognitionEvent {
+  results: {
+    length: number;
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface CustomWindow extends Window {
+  SpeechRecognition?: new () => SpeechRecognitionInstance;
+  webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+}
 
 interface TranscriptPanelProps {
   transcript: string;
@@ -16,35 +42,37 @@ export function TranscriptPanel({
   disabled,
   maxLength = 6000,
 }: TranscriptPanelProps) {
-  const [isListening, setIsListening] = useState(false);
-  const [lang, setLang] = useState<"id-ID" | "en-US">("id-ID");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
+  const [language, setLanguage] = useState<"id" | "en">("id");
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const baseTextRef = useRef("");
 
   useEffect(() => {
     return () => {
-      recognitionRef.current?.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
     };
   }, []);
 
-  const toggleListening = async () => {
+  const toggleRecording = async () => {
     if (disabled) return;
 
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
+    if (isRecording) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsRecording(false);
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+    const customWin = window as unknown as CustomWindow;
+    const SpeechRecognitionClass =
+      customWin.SpeechRecognition || customWin.webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
+    if (!SpeechRecognitionClass) {
       alert(
-        "Browser kamu belum mendukung Speech Recognition. Gunakan Google Chrome atau Microsoft Edge."
+        "Browser ini belum mendukung Web Speech API. Silakan gunakan Google Chrome atau Microsoft Edge."
       );
       return;
     }
@@ -52,126 +80,117 @@ export function TranscriptPanel({
     // 1. Minta izin akses mikrofon secara eksplisit
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Matikan audio stream dummy setelah izin didapat
       stream.getTracks().forEach((track) => track.stop());
     } catch (err) {
       console.error("Mic permission error:", err);
       alert(
-        "Akses mikrofon belum diizinkan. Klik ikon gembok/pengaturan di sebelah URL browser (localhost:3000) dan ubah izin Mikrofon menjadi 'Allow'."
+        "Akses mikrofon belum diizinkan. Klik ikon gembok/pengaturan di sebelah URL browser dan izinkan Mikrofon."
       );
       return;
     }
 
     baseTextRef.current = transcript ? transcript.trim() + "\n" : "";
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = lang;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (event: any) => {
-      let speechText = "";
-      for (let i = 0; i < event.results.length; i++) {
-        speechText += event.results[i][0].transcript + " ";
-      }
-      onChange((baseTextRef.current + speechText).slice(0, maxLength));
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onerror = (event: any) => {
-      console.warn("Speech Recognition notice:", event.error);
-      // JANGAN matikan mic jika hanya hening sesaat (no-speech)
-      if (event.error === "no-speech") {
-        return;
-      }
-      if (event.error === "not-allowed") {
-        alert("Akses mikrofon ditolak oleh browser.");
-      } else if (event.error === "network") {
-        alert("Gagal menghubungi layanan speech browser (network error). Cek koneksi internet.");
-      }
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
     try {
+      const recognition = new SpeechRecognitionClass();
+      recognition.lang = language === "id" ? "id-ID" : "en-US";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let speechText = "";
+        for (let i = 0; i < event.results.length; i++) {
+          speechText += event.results[i][0].transcript + " ";
+        }
+        onChange((baseTextRef.current + speechText).slice(0, maxLength));
+      };
+
+      recognition.onerror = (event: { error: string }) => {
+        console.warn("Speech Recognition notice:", event.error);
+        if (event.error === "no-speech") {
+          return; // Jangan matikan mic jika hening sesaat
+        }
+        if (event.error === "not-allowed") {
+          alert("Akses mikrofon ditolak oleh browser.");
+        } else if (event.error === "network") {
+          alert(
+            "Gagal menghubungi layanan speech browser (network error). Cek koneksi internet atau gunakan Chrome/Edge."
+          );
+        }
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
       recognition.start();
-      setIsListening(true);
+      setIsRecording(true);
     } catch (e) {
       console.error(e);
-      setIsListening(false);
+      setIsRecording(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-700">
+    <div className="flex flex-col gap-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
           Meeting Transcript
         </label>
-        <div className="flex items-center gap-2">
-          {/* Toggle Bahasa ID / EN */}
-          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
+
+        <div className="flex items-center gap-3">
+          {/* Toggle Bahasa M3 */}
+          <div className="inline-flex items-center rounded-full border border-[#c4c6d0] bg-[#f0f4f9] p-0.5">
             <button
               type="button"
-              onClick={() => setLang("id-ID")}
-              disabled={isListening}
-              className={`rounded px-1.5 py-0.5 font-medium transition-colors ${
-                lang === "id-ID"
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+              onClick={() => setLanguage("id")}
+              disabled={isRecording}
+              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                language === "id"
+                  ? "bg-white text-[#0b57d0] shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              🇮🇩 ID
+              ID
             </button>
             <button
               type="button"
-              onClick={() => setLang("en-US")}
-              disabled={isListening}
-              className={`rounded px-1.5 py-0.5 font-medium transition-colors ${
-                lang === "en-US"
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+              onClick={() => setLanguage("en")}
+              disabled={isRecording}
+              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                language === "en"
+                  ? "bg-white text-[#0b57d0] shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              🇺🇸 EN
+              EN
             </button>
           </div>
 
-          {/* Tombol Microphone */}
+          {/* Record Standup M3 */}
           <button
             type="button"
-            onClick={toggleListening}
+            onClick={toggleRecording}
             disabled={disabled}
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all ${
-              isListening
-                ? "border-red-300 bg-red-50 text-red-600 shadow-sm"
-                : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 disabled:opacity-50"
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-semibold transition-all ${
+              isRecording
+                ? "border-red-400 bg-red-50 text-red-700 animate-pulse"
+                : "border-[#c4c6d0] bg-white text-slate-700 hover:bg-[#f0f4f9] disabled:opacity-50"
             }`}
           >
-            {isListening ? (
-              <>
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-                </span>
-                <span>Listening ({lang === "id-ID" ? "ID" : "EN"})...</span>
-                <MicOff className="h-3.5 w-3.5 text-red-500" />
-              </>
-            ) : (
-              <>
-                <Mic className="h-3.5 w-3.5 text-slate-500" />
-                <span>Record Standup</span>
-              </>
-            )}
+            <span
+              className={`material-symbols-outlined !text-[18px] ${
+                isRecording ? "text-red-600" : "text-slate-600"
+              }`}
+            >
+              {isRecording ? "mic" : "mic_none"}
+            </span>
+            <span>{isRecording ? "Recording..." : "Record Standup"}</span>
           </button>
 
-          {/* Character counter */}
-          <span className="text-xs text-slate-400">
+          <span className="text-xs font-mono text-slate-500">
             {transcript.length}/{maxLength}
           </span>
         </div>
@@ -182,14 +201,14 @@ export function TranscriptPanel({
         onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
         disabled={disabled}
         placeholder={
-          isListening
-            ? `Sedang mendengarkan dalam bahasa ${lang === "id-ID" ? "Indonesia" : "Inggris"}... Silakan bicara...`
-            : "Paste your meeting transcript here, or select language & click 'Record Standup'…"
+          isRecording
+            ? `Sedang mendengarkan dalam bahasa ${language === "id" ? "Indonesia" : "Inggris"}... Silakan bicara...`
+            : "Paste your meeting transcript here, or select language & click 'Record Standup'..."
         }
-        className={`h-64 w-full resize-none rounded-xl border bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 disabled:opacity-50 transition-all ${
-          isListening
-            ? "border-red-300 ring-2 ring-red-100 bg-red-50/20"
-            : "border-slate-200 focus:border-blue-300 focus:ring-blue-100"
+        className={`h-64 w-full resize-none rounded-2xl border bg-white p-4 text-sm leading-relaxed text-[#1f1f1f] placeholder:text-slate-400 focus:outline-none focus:ring-2 disabled:opacity-50 transition-all ${
+          isRecording
+            ? "border-red-300 ring-2 ring-red-100 bg-red-50/10"
+            : "border-[#c4c6d0] focus:border-[#0b57d0] focus:ring-[#d3e3fd]"
         }`}
       />
     </div>

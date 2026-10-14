@@ -1,5 +1,3 @@
-import { AlertTriangle, RotateCcw } from "lucide-react";
-
 interface ErrorStateProps {
   message: string;
   onRetry: () => void;
@@ -7,18 +5,21 @@ interface ErrorStateProps {
 
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-8 text-center">
-      <AlertTriangle className="h-8 w-8 text-red-500" />
+    <div className="flex flex-col items-center gap-4 rounded-3xl border border-red-200 bg-red-50/80 p-8 text-center text-red-900">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white">
+        <span className="material-symbols-outlined !text-[28px]">error</span>
+      </div>
       <div>
-        <p className="font-medium text-red-700">Analysis Failed</p>
-        <p className="mt-1 text-sm text-red-600">{message}</p>
+        <p className="font-bold text-base text-red-950">Analysis Failed</p>
+        <p className="mt-1 text-xs text-red-700 max-w-md">{message}</p>
       </div>
       <button
+        type="button"
         onClick={onRetry}
-        className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+        className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-red-700 active:scale-[0.98]"
       >
-        <RotateCcw className="h-4 w-4" />
-        Try Again
+        <span className="material-symbols-outlined !text-[18px]">refresh</span>
+        <span>Try Again</span>
       </button>
     </div>
   );

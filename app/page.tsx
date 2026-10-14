@@ -24,8 +24,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [demoMode, setDemoMode] = useState(false);
   const [meetingSummary, setMeetingSummary] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  // Ctrl+Shift+D to toggle demo mode
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (
@@ -68,7 +68,6 @@ export default function Home() {
         setDurationMs(Date.now() - start);
         setState("done");
       } catch (err) {
-        // Client-side fallback: if request fails entirely, use mocks
         if (sampleId && MOCKS[sampleId]) {
           await new Promise((r) => setTimeout(r, 2500));
           setResult(MOCKS[sampleId]);
@@ -112,39 +111,35 @@ export default function Home() {
     setDurationMs(undefined);
     setError("");
     setMeetingSummary("");
+    setCopied(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#f8fafd] text-[#1f1f1f]">
       <Header demoMode={demoMode} />
 
       <main className="flex-1 mx-auto w-full max-w-7xl px-6 py-8 space-y-8">
-        {/* Hero */}
         {state === "idle" && (
-          <div className="text-center space-y-2 py-4">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <div className="text-center space-y-3 py-6">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-[#1f1f1f]">
               Transform meetings into
-              <span className="text-blue-600"> sprint tickets</span>
+              <span className="text-[#0b57d0]"> sprint tickets</span>
             </h1>
-            <p className="text-slate-500 max-w-xl mx-auto">
-              Paste a meeting transcript or select a sample below. SprintSync
-              uses AI to extract actionable tickets with priorities, story
-              points, and dependencies.
+            <p className="text-slate-600 max-w-xl mx-auto text-sm leading-relaxed">
+              Paste a meeting transcript or select a sample below. SprintSync extracts actionable tickets with priorities, story points, and dependencies.
             </p>
           </div>
         )}
 
-        {/* Sample selector */}
         {(state === "idle" || state === "done") && (
           <section>
-            <h2 className="text-sm font-medium text-slate-500 mb-3">
-              Try a sample transcript
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2.5">
+              Sample Transcripts
             </h2>
-            <SampleSelector onSelect={handleSelectSample} disabled={false} />
+            <SampleSelector onSelect={handleSelectSample} disabled={false} activeId={activeSampleId} />
           </section>
         )}
 
-        {/* Split view: transcript + results */}
         {state === "idle" && (
           <section className="space-y-4">
             <TranscriptPanel
@@ -154,76 +149,83 @@ export default function Home() {
             />
             {transcript.length >= 50 && (
               <button
+                type="button"
                 onClick={handleAnalyzeCustom}
-                className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-full bg-[#0b57d0] px-6 py-3 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#1557bf] active:scale-[0.98]"
               >
-                Analyze Transcript
+                <span className="material-symbols-outlined !text-[18px]">auto_fix_high</span>
+                <span>Analyze Transcript</span>
               </button>
             )}
           </section>
         )}
 
-        {/* Analyzing */}
         {state === "analyzing" && <AnalyzingState />}
 
-        {/* Error */}
         {state === "error" && (
           <ErrorState message={error} onRetry={handleRetry} />
         )}
 
-        {/* Results */}
         {state === "done" && result && (
           <section className="space-y-6">
-            {/* Summary */}
             {meetingSummary && (
-              <div className="rounded-xl border bg-blue-50 p-4">
-                <p className="text-sm font-medium text-blue-800">
-                  📝 Meeting Summary
+              <div className="rounded-2xl border border-[#e0e3e7] bg-white p-5 shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0b57d0]">
+                  <span className="material-symbols-outlined !text-[18px]">summarize</span>
+                  <span>Meeting Summary</span>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-slate-700">
+                  {meetingSummary}
                 </p>
-                <p className="mt-1 text-sm text-blue-700">{meetingSummary}</p>
               </div>
             )}
 
-            {/* Metrics */}
             <MetricsBar
               tickets={result.tickets}
               source={source}
               durationMs={durationMs}
             />
 
-            {/* Kanban */}
             <KanbanBoard tickets={result.tickets} />
 
-            {/* Actions */}
-            <div className="flex gap-3">
+            {/* Tombol Aksi M3 dengan padding lega */}
+            <div className="flex flex-wrap items-center gap-3 pt-3">
               <button
+                type="button"
                 onClick={handleReset}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-full border border-[#c4c6d0] bg-white px-6 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition-all hover:bg-[#f0f4f9] active:scale-[0.98]"
               >
-                ← New Analysis
+                <span className="material-symbols-outlined !text-[18px]">arrow_back</span>
+                <span>New Analysis</span>
               </button>
+
               <button
+                type="button"
                 onClick={() => {
                   const md = result.tickets
                     .map(
                       (t) =>
-                        `### ${t.id}: ${t.issue_title}\n- **Assignee:** ${t.assignee}\n- **Priority:** ${t.priority}\n- **SP:** ${t.story_points}\n- **AC:**\n${t.acceptance_criteria.map((ac) => `  - ${ac}`).join("\n")}${t.dependency.has_dependency ? `\n- **Blocked by:** ${t.dependency.blocked_by.join(", ")} — ${t.dependency.note}` : ""}`,
+                        `### ${t.id}: ${t.issue_title}\n- **Assignee:** ${t.assignee}\n- **Priority:** ${t.priority}\n- **SP:** ${t.story_points}\n- **AC:**\n${t.acceptance_criteria.map((ac) => `  - ${ac}`).join("\n")}${t.dependency.has_dependency ? `\n- **Blocked by:** ${t.dependency.blocked_by.join(", ")}: ${t.dependency.note}` : ""}`,
                     )
                     .join("\n\n");
                   navigator.clipboard.writeText(md);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
                 }}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d3e3fd] bg-[#d3e3fd]/60 px-6 py-2.5 text-xs font-semibold text-[#0b57d0] shadow-xs transition-all hover:bg-[#d3e3fd] active:scale-[0.98]"
               >
-                📋 Copy as Markdown
+                <span className="material-symbols-outlined !text-[18px]">
+                  {copied ? "check" : "content_copy"}
+                </span>
+                <span>{copied ? "Copied to Clipboard!" : "Copy as Markdown"}</span>
               </button>
             </div>
           </section>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t py-4 text-center text-xs text-slate-400">
-        SprintSync — AI-powered meeting-to-sprint converter
+      <footer className="border-t border-[#e0e3e7] py-4 text-center text-xs text-slate-500">
+        SprintSync - AI-powered meeting-to-sprint converter
       </footer>
     </div>
   );
